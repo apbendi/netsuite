@@ -1,9 +1,10 @@
 module NetSuite
   module Actions
-    class Get
+    class GetList
       include Support::Requests
 
       def initialize(klass, options = {})
+        print klass
         @klass   = klass
         @options = options
       end
@@ -11,11 +12,15 @@ module NetSuite
       private
 
       def request
-        connection.request :platformMsgs, :get do
+        connection.request :platformMsgs, :getList do
           soap.namespaces['xmlns:platformMsgs'] = 'urn:messages_2011_2.platform.webservices.netsuite.com'
           soap.namespaces['xmlns:platformCore'] = 'urn:core_2011_2.platform.webservices.netsuite.com'
           soap.header = auth_header
-          soap.body   = request_body
+          soap.body do |xml|
+            @options[:list].each do |id|
+              xml.platformMsgs :baseRef, :internalId => id, :type => 'inventoryType', "xsi:type" => "platformCore:RecordRef"
+            end
+          end
         end
       end
 
@@ -24,21 +29,32 @@ module NetSuite
       end
 
       # <soap:Body>
-      #   <platformMsgs:get>
-      #     <platformMsgs:baseRef internalId="983" type="customer" xsi:type="platformCore:RecordRef">
-      #       <platformCore:name/>
-      #     </platformMsgs:baseRef>
-      #   </platformMsgs:get>
+      #   <platformMsgs:getList>
+      #     <platformMsgs:baseRef internalId="983" type="customer" xsi:type="platformCore:RecordRef"/>
+      #     <platformMsgs:baseRef internalId="-5" type="employee" xsi:type="platformCore:RecordRef"/>
+      #   </platformMsgs:getList>
       # </soap:Body>
       def request_body
+        b = Builder::XmlMarkup.new
+        
         body = {
-          'platformMsgs:baseRef' => {},
+          'platformMsgs:getList' => [],
           :attributes! => {
             'platformMsgs:baseRef' => {
               'xsi:type'  => (@options[:custom] ? 'platformCore:CustomRecordRef' : 'platformCore:RecordRef')
             }
           }
         }
+        
+        @options[:list].each do |item|
+          item_body = {
+            'platformMsgs:baseRef' => {},
+            :attributes! => {
+              
+            }
+          }
+          body['platformMsgs:getList'] << 
+        end
         body[:attributes!]['platformMsgs:baseRef']['externalId'] = @options[:external_id] if @options[:external_id]
         body[:attributes!]['platformMsgs:baseRef']['internalId'] = @options[:internal_id] if @options[:internal_id]
         body[:attributes!]['platformMsgs:baseRef']['typeId']     = @options[:type_id]     if @options[:type_id]
