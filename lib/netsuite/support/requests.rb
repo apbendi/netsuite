@@ -34,7 +34,7 @@ module NetSuite
       end
 
       def build_response
-        Response.new(:success => success?, :body => response_body, :errors => errors)
+        Response.new(:success => success?, :body => response_body, :errors => errors, :safe_list => safe_list)
       end
 
       def success?
