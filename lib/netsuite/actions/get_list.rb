@@ -2,25 +2,39 @@ module NetSuite
   module Actions
     class GetList
       include Support::Requests
-
-      def initialize(klass, options = {})
-        print klass
+      
+      attr_reader :errors
+      
+      def initialize(klass, options = [])
         @klass   = klass
         @options = options
+        @errors  = []
+      end
+      
+      public
+      def errors_list
+        @errors
+        
       end
 
       private
+      
+      # <soap:Body>
+      #   <platformMsgs:getList>
+      #     <platformMsgs:baseRef internalId="983" type="customer" xsi:type="platformCore:RecordRef"/>
+      #     <platformMsgs:baseRef internalId="-5" type="employee" xsi:type="platformCore:RecordRef"/>
+      #   </platformMsgs:getList>
+      # </soap:Body>
 
       def request
+        # scope issues...
+        options = @options
+        
         connection.request :platformMsgs, :getList do
-          soap.namespaces['xmlns:platformMsgs'] = 'urn:messages_2011_2.platform.webservices.netsuite.com'
-          soap.namespaces['xmlns:platformCore'] = 'urn:core_2011_2.platform.webservices.netsuite.com'
+          soap.namespaces['xmlns:platformMsgs'] = "urn:messages_#{NetSuite::Configuration.api_version}.platform.webservices.netsuite.com"
+          soap.namespaces['xmlns:platformCore'] = "urn:core_#{NetSuite::Configuration.api_version}.platform.webservices.netsuite.com"
           soap.header = auth_header
-          soap.body do |xml|
-            @options[:list].each do |id|
-              xml.platformMsgs :baseRef, :internalId => id, :type => 'inventoryType', "xsi:type" => "platformCore:RecordRef"
-            end
-          end
+          soap.body = request_body
         end
       end
 
@@ -28,50 +42,42 @@ module NetSuite
         @klass.to_s.split('::').last.lower_camelcase
       end
 
-      # <soap:Body>
-      #   <platformMsgs:getList>
-      #     <platformMsgs:baseRef internalId="983" type="customer" xsi:type="platformCore:RecordRef"/>
-      #     <platformMsgs:baseRef internalId="-5" type="employee" xsi:type="platformCore:RecordRef"/>
-      #   </platformMsgs:getList>
-      # </soap:Body>
-      def request_body
-        b = Builder::XmlMarkup.new
-        
-        body = {
-          'platformMsgs:getList' => [],
-          :attributes! => {
-            'platformMsgs:baseRef' => {
-              'xsi:type'  => (@options[:custom] ? 'platformCore:CustomRecordRef' : 'platformCore:RecordRef')
-            }
-          }
-        }
-        
-        @options[:list].each do |item|
-          item_body = {
-            'platformMsgs:baseRef' => {},
-            :attributes! => {
-              
-            }
-          }
-          body['platformMsgs:getList'] << 
-        end
-        body[:attributes!]['platformMsgs:baseRef']['externalId'] = @options[:external_id] if @options[:external_id]
-        body[:attributes!]['platformMsgs:baseRef']['internalId'] = @options[:internal_id] if @options[:internal_id]
-        body[:attributes!]['platformMsgs:baseRef']['typeId']     = @options[:type_id]     if @options[:type_id]
-        body[:attributes!]['platformMsgs:baseRef']['type']       = soap_type              unless @options[:custom]
-        body
-      end
-
       def success?
-        @success ||= response_hash[:status][:@is_success] == 'true'
+        @success = true
+        
+        response_hash.each do |response|
+          unless response[:status][:@is_success] == 'true'
+            @errors << {
+              "type" => response[:status][:status_detail][:@type],
+              "code" => response[:status][:status_detail][:code],
+              "message" => response[:status][:status_detail][:message]
+            }
+            
+            @success = false
+          end
+        end
+        
+        @success
+      end
+      
+      def request_body
+        # not sure if there is a way to do lists with the hash method of SOAP construction
+        # needed to revert back to XMLBuilder
+        
+        buffer = ""
+        xml = Builder::XmlMarkup.new :target => buffer
+        @options.each do |id|
+          xml.platformMsgs :baseRef, :internalId => id, :type => 'inventoryItem', "xsi:type" => "platformCore:RecordRef"
+        end
+        buffer
       end
 
       def response_body
-        @response_body ||= response_hash[:record]
+        @response_body ||= response_hash
       end
 
       def response_hash
-        @response_hash = @response[:get_response][:read_response]
+        @response_hash = @response[:get_list_response][:read_response_list][:read_response]
       end
 
       module Support
@@ -82,12 +88,17 @@ module NetSuite
 
         module ClassMethods
 
-          def get(options = {})
-            response = NetSuite::Actions::Get.call(self, options)
+          def getList(options = [])
+            response = NetSuite::Actions::GetList.call(self, options)
             if response.success?
-             new(response.body)
+              response_list = []
+              response.body.each do |list_response|
+                response_list << new(list_response[:record])
+              end
+              
+              response_list
             else
-             raise RecordNotFound, "#{self} with OPTIONS=#{options.inspect} could not be found"
+             raise RecordNotFound, "#{self} with OPTIONS=#{options.inspect} could not be found. Errors: #{response.errors}"
             end
           end
 

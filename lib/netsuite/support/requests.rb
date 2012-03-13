@@ -34,7 +34,7 @@ module NetSuite
       end
 
       def build_response
-        Response.new(:success => success?, :body => response_body)
+        Response.new(:success => success?, :body => response_body, :errors => errors)
       end
 
       def success?
@@ -43,6 +43,12 @@ module NetSuite
 
       def response_body
         raise NotImplementedError, 'Please implement a #response_body method'
+      end
+      
+      def errors
+        # don't require implementation at this point...
+        # raise NotImplementedError, 'Please implement a #errors method'
+        []
       end
 
     end

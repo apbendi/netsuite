@@ -32,6 +32,7 @@ module NetSuite
     autoload :Add,        'netsuite/actions/add'
     autoload :Delete,     'netsuite/actions/delete'
     autoload :Get,        'netsuite/actions/get'
+    autoload :GetList,    'netsuite/actions/get_list'
     autoload :Initialize, 'netsuite/actions/initialize'
     autoload :Update,     'netsuite/actions/update'
   end
