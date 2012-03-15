@@ -48,10 +48,10 @@ module NetSuite
           
           unless response[:status][:@is_success] == 'true'
             @errors << {
-              "type" => response[:status][:status_detail][:@type],
-              "code" => response[:status][:status_detail][:code],
-              "message" => response[:status][:status_detail][:message],
-              "internal_id" => @options[index]
+              :type => response[:status][:status_detail][:@type],
+              :code => response[:status][:status_detail][:code],
+              :message => response[:status][:status_detail][:message],
+              :internal_id => @options[index]
             }
             
             @success = false
