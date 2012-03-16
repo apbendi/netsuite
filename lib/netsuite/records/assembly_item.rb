@@ -7,7 +7,7 @@ module NetSuite
       include Support::Actions
       include Namespaces::ListAcct
 
-      actions :get, :add, :delete
+      actions :get, :add, :delete, :getList
 
       fields :auto_lead_time, :auto_preferred_stock_level, :auto_reorder_point, :available_to_partners, :average_cost,
         :copy_description, :cost, :cost_estimate, :cost_estimate_type, :cost_estimate_units, :cost_units, :costing_method,
@@ -32,6 +32,8 @@ module NetSuite
         :total_value, :track_landed_cost, :transfer_price, :upc_code, :url_component, :use_bins, :use_marginal_rates,
         :vendor_name, :vsoe_deferral, :vsoe_delivered, :vsoe_permit_discount, :vsoe_price, :weight, :weight_unit, :weight_units
 
+      field :custom_field_list, CustomFieldList
+
       record_refs :alternate_demand_source_item, :asset_account, :bill_exch_rate_variance_acct, :bill_price_variance_acct,
         :bill_qty_variance_acct, :billing_schedule, :cogs_account, :cost_category, :custom_form, :deferred_revenue_account,
         :demand_source, :department, :expense_account, :gain_loss_account, :income_account, :issue_product, :klass, :location,
@@ -47,6 +49,16 @@ module NetSuite
         @internal_id = attributes.delete(:internal_id) || attributes.delete(:@internal_id)
         @external_id = attributes.delete(:external_id) || attributes.delete(:@external_id)
         initialize_from_attributes_hash(attributes)
+
+        # the pricing matrix should be a seperate object, but this will do for now
+        
+        attributes[:pricing_matrix][:pricing].each do |pricing|
+          pricing_matrix << RecordRef.new(pricing)
+        end
+      end
+
+      def pricing_matrix
+        @pricing_matrix ||= []
       end
     end
   end
