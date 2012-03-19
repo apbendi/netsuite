@@ -34,7 +34,12 @@ module NetSuite
       end
 
       def build_response
-        Response.new(:success => success?, :body => response_body, :errors => errors, :safe_list => safe_list)
+        # TODO: when searching is supported the :safe_list should be used for those requests as well
+        if self.class == NetSuite::Actions::GetList
+          Response.new(:success => success?, :body => response_body, :errors => errors, :safe_list => safe_list)
+        else
+          Response.new(:success => success?, :body => response_body)  
+        end
       end
 
       def success?
@@ -51,6 +56,9 @@ module NetSuite
         []
       end
 
+      def safe_list
+        []
+      end
     end
   end
 end

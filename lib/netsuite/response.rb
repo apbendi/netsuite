@@ -7,7 +7,7 @@ module NetSuite
       @success = attributes[:success]
       @body    = attributes[:body]
       @errors  = attributes[:errors]
-      @safe_list = attributes[:safe_list]
+      @safe_list = attributes[:safe_list] || {}
     end
 
     def success!

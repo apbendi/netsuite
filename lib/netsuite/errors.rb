@@ -4,7 +4,6 @@ module NetSuite
     attr_accessor :records
     
     def initialize(errors = nil, records = nil)
-      Rails.logger.info "CUSTOM ERROR"
       @errors = errors || []
       @records = records || []
     end
