@@ -37,14 +37,21 @@ module NetSuite
       end
 
       def success?
+        # this method is called multiple times; cache the response
+        return @success unless @success.nil?
+
         @success = true
         
         # as far as I can tell the order of the requests & responses is maintained
         # therefore, matching up the index of the response to the index of the request should work in giving us an internal ID of the problem record
         # this will enable us to grab some of the responses and error report problem records or run them through a seperate request
-        
-        response_hash.each_index do |index|
-          response = response_hash[index]
+        response_list = response_hash
+
+        # force a single response into an error for convience sake
+        response_list = [response_list] if response_list.class == Hash
+
+        response_list.each_index do |index|
+          response = response_list[index]
           
           unless response[:status][:@is_success] == 'true'
             @errors << {
@@ -94,7 +101,7 @@ module NetSuite
 
           def getList(options = [])
             response = NetSuite::Actions::GetList.call(self, options)
-            
+
             all_success = response.success?
             response_list = []
             

@@ -51,6 +51,9 @@ module NetSuite
         initialize_from_attributes_hash(attributes)
         
         # the pricing matrix should be a seperate object, but this will do for now
+
+        # TODO: there should be better error handling for cases like this
+        attributes[:pricing_matrix] = { :pricing => [] } if attributes[:pricing_matrix].nil?
         
         attributes[:pricing_matrix][:pricing].each do |pricing|
           pricing_matrix << RecordRef.new(pricing)
