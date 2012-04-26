@@ -7,7 +7,7 @@ module NetSuite
       include Support::Actions
       include Namespaces::ListAcct
 
-      actions :get, :add, :delete
+      actions :get, :add, :delete, :getList
 
       fields :available_to_partners, :cost_estimate, :cost_estimate_type, :cost_estimate_units, :country_of_manufacture,
         :created_date, :custom_field_list, :display_name, :dont_show_price, :enforce_min_qty_internally, :exclude_from_sitemap,
@@ -37,6 +37,15 @@ module NetSuite
         @internal_id = attributes.delete(:internal_id) || attributes.delete(:@internal_id)
         @external_id = attributes.delete(:external_id) || attributes.delete(:@external_id)
         initialize_from_attributes_hash(attributes)
+
+        attributes[:pricing_matrix] = { :pricing => [] } if attributes[:pricing_matrix].nil?
+        attributes[:pricing_matrix][:pricing].each do |pricing|
+          pricing_matrix << RecordRef.new(pricing)
+        end
+      end
+
+      def pricing_matrix
+        @pricing_matrix ||= []
       end
 
     end
