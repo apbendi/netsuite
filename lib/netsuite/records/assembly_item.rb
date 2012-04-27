@@ -1,6 +1,6 @@
 module NetSuite
   module Records
-    class AssemblyItem < InventoryItem
+    class AssemblyItem
       include Support::Fields
       include Support::RecordRefs
       include Support::Records
@@ -33,6 +33,7 @@ module NetSuite
         :vendor_name, :vsoe_deferral, :vsoe_delivered, :vsoe_permit_discount, :vsoe_price, :weight, :weight_unit, :weight_units
 
       field :custom_field_list, CustomFieldList
+      field :bin_number_list, BinNumberList
 
       record_refs :alternate_demand_source_item, :asset_account, :bill_exch_rate_variance_acct, :bill_price_variance_acct,
         :bill_qty_variance_acct, :billing_schedule, :cogs_account, :cost_category, :custom_form, :deferred_revenue_account,
