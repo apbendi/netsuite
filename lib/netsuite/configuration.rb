@@ -18,12 +18,24 @@ module NetSuite
       if version
         self.api_version = version
       else
-        attributes[:api_version] ||= '2011_2'
+        attributes[:api_version] ||= '2012_1'
       end
     end
 
     def api_version=(version)
       attributes[:api_version] = version
+    end
+
+    def is_prod?(is_prod = nil)
+      if(is_prod)
+        self.is_prod = is_prod
+      else
+        attributes[:is_prod] ||= false
+      end
+    end
+
+    def is_prod=(is_prod)
+      attributes[:is_prod] = is_prod
     end
 
     def wsdl=(wsdl)
@@ -34,7 +46,11 @@ module NetSuite
       if wsdl
         self.wsdl = wsdl
       else
-        attributes[:wsdl] ||= File.expand_path("../../../wsdl/#{api_version}.wsdl", __FILE__)
+        if self.is_prod?
+          attributes[:wsdl] ||= "https://webservices.netsuite.com/wsdl/v#{api_version}_0/netsuite.wsdl"
+        else
+          attributes[:wsdl] ||= "https://webservices.sandbox.netsuite.com/wsdl/v#{api_version}_0/netsuite.wsdl"
+        end
       end
     end
 
