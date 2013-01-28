@@ -67,7 +67,11 @@ module NetSuite
           options.merge!(:internal_id => internal_id) if respond_to?(:internal_id) && internal_id
           options.merge!(:external_id => external_id) if respond_to?(:external_id) && external_id
           response = NetSuite::Actions::Update.call(self.class, options)
-          response.success?
+          if response.success?
+            new(response.body)
+          else
+            raise UpdateError, "Update with OPTIONS=#{options} failed"
+          end
         end
       end
 
