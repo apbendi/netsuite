@@ -68,7 +68,7 @@ module NetSuite
           options.merge!(:external_id => external_id) if respond_to?(:external_id) && external_id
           response = NetSuite::Actions::Update.call(self.class, options)
           if response.success?
-            new(response.body)
+            true
           else
             raise UpdateError, "Update with OPTIONS=#{options} failed"
           end
